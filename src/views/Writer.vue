@@ -36,6 +36,33 @@
           </template>
           AI 助手
         </n-button>
+
+        <!-- 暗色模式切换 -->
+        <n-button
+          quaternary
+          size="small"
+          @click="theme.toggleTheme()"
+        >
+          <template #icon>
+            <n-icon size="16">
+              <MoonOutline v-if="!theme.isDark.value" />
+              <SunnyOutline v-else />
+            </n-icon>
+          </template>
+        </n-button>
+
+        <!-- 查找替换 -->
+        <n-button
+          quaternary
+          size="small"
+          @click="showFindReplace = !showFindReplace"
+          :type="showFindReplace ? 'primary' : 'default'"
+        >
+          <template #icon>
+            <n-icon size="16"><SearchOutline /></n-icon>
+          </template>
+          查找
+        </n-button>
       </div>
       <div class="header-right">
         <!-- 保存状态指示 -->
@@ -89,6 +116,13 @@
             />
           </div>
 
+          <!-- 查找替换栏 -->
+          <FindReplace
+            :visible="showFindReplace"
+            :vditor="vditorInstance"
+            @close="showFindReplace = false"
+          />
+
           <!-- Markdown 编辑器 -->
           <div class="editor-container" ref="editorContainer"></div>
         </template>
@@ -122,11 +156,13 @@ import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
+import { useTheme } from '@/stores/theme'
 import { projectsApi } from '@/lib/supabase'
 import ChapterTree from '@/components/ChapterTree.vue'
 // Vditor 核心 CSS（必须引入，否则工具栏样式不生效）
 import 'vditor/dist/index.css'
 import DeepSeekSidebar from '@/components/DeepSeekSidebar.vue'
+import FindReplace from '@/components/FindReplace.vue'
 import {
   NButton,
   NEmpty,
@@ -141,6 +177,9 @@ import {
   CheckmarkCircleOutline,
   SyncOutline,
   AlertCircleOutline,
+  SearchOutline,
+  MoonOutline,
+  SunnyOutline,
 } from '@vicons/ionicons5'
 
 const props = defineProps({
@@ -151,10 +190,12 @@ const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const store = useProjectStore()
+const theme = useTheme()
 
 // ========== 编辑器状态 ==========
 const showChapterPanel = ref(true) // 左侧目录面板
 const showAIPanel = ref(false)     // 右侧 AI 面板
+const showFindReplace = ref(false) // 查找替换栏
 const editorContainer = ref(null)  // Vditor 挂载点
 let vditorInstance = null          // Vditor 实例引用
 const editingTitle = ref('')       // 当前编辑的章节标题
@@ -190,7 +231,22 @@ onMounted(async () => {
     console.error('加载项目失败:', err)
     message.error('加载失败：' + (err.message || '未知错误'))
   }
+
+  // 键盘快捷键
+  window.addEventListener('keydown', handleKeyDown)
 })
+
+// Ctrl+H / Cmd+H 打开查找替换
+function handleKeyDown(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+    e.preventDefault()
+    showFindReplace.value = !showFindReplace.value
+  }
+  // Esc 关闭查找替换
+  if (e.key === 'Escape' && showFindReplace.value) {
+    showFindReplace.value = false
+  }
+}
 
 onBeforeUnmount(() => {
   // 组件卸载前保存并销毁编辑器
@@ -199,6 +255,7 @@ onBeforeUnmount(() => {
     vditorInstance.destroy()
     vditorInstance = null
   }
+  window.removeEventListener('keydown', handleKeyDown)
 })
 
 // ========== 监听章节切换：重新初始化编辑器 ==========
@@ -305,6 +362,13 @@ async function initOrSwitchEditor() {
     // 使用 CDN 加载 Vditor 的资源文件（i18n、样式等）
     cdn: 'https://cdn.jsdelivr.net/npm/vditor@3.11.2',
   })
+
+  // 初始化后立即应用暗色主题（如果已开启）
+  if (theme.isDark.value) {
+    try {
+      vditorInstance.setTheme('dark')
+    } catch {}
+  }
 }
 
 // ========== 自动保存逻辑 ==========
@@ -400,6 +464,23 @@ async function handleDeleteChapter(id) {
     message.error('删除失败')
   }
 }
+
+// 监听暗色模式切换，同步 Vditor 主题
+watch(
+  () => theme.isDark.value,
+  (dark) => {
+    if (vditorInstance) {
+      try {
+        vditorInstance.setTheme(dark ? 'dark' : 'classic')
+      } catch {}
+    }
+    // 更新 writer-page 背景色
+    const el = document.querySelector('.writer-page')
+    if (el) {
+      el.style.backgroundColor = dark ? '#1a1a2e' : '#ffffff'
+    }
+  }
+)
 </script>
 
 <style scoped>
@@ -407,7 +488,7 @@ async function handleDeleteChapter(id) {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--bg-white);
   overflow: hidden;
 }
 
@@ -418,8 +499,8 @@ async function handleDeleteChapter(id) {
   justify-content: space-between;
   padding: 0 16px;
   height: 52px;
-  background: #fafafa;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 .header-left {
@@ -430,7 +511,7 @@ async function handleDeleteChapter(id) {
 .project-title {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 .header-right {
   display: flex;
@@ -457,8 +538,8 @@ async function handleDeleteChapter(id) {
 .chapter-panel {
   width: 260px;
   min-width: 260px;
-  border-right: 1px solid #e5e7eb;
-  background: #fafafa;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-panel);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -505,8 +586,8 @@ async function handleDeleteChapter(id) {
 .ai-panel {
   width: 420px;
   min-width: 420px;
-  border-left: 1px solid #e5e7eb;
-  background: #fff;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-white);
   flex-shrink: 0;
   overflow: hidden;
 }

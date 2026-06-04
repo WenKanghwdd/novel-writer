@@ -4,6 +4,20 @@
     <n-layout-header bordered class="header">
       <div class="header-inner">
         <h1 class="logo">📖 哈哈哈</h1>
+        <n-button
+          quaternary
+          size="medium"
+          @click="theme.toggleTheme()"
+          class="theme-btn"
+        >
+          <template #icon>
+            <n-icon size="20">
+              <MoonOutline v-if="!theme.isDark.value" />
+              <SunnyOutline v-else />
+            </n-icon>
+          </template>
+          {{ theme.isDark.value ? '亮色' : '暗色' }}
+        </n-button>
         <n-button type="primary" size="medium" @click="showNewDialog = true">
           <template #icon>
             <n-icon><AddOutline /></n-icon>
@@ -169,6 +183,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
+import { useTheme } from '@/stores/theme'
 import {
   NButton,
   NCard,
@@ -188,11 +203,14 @@ import {
   TimeOutline,
   CreateOutline,
   TrashOutline,
+  MoonOutline,
+  SunnyOutline,
 } from '@vicons/ionicons5'
 
 const router = useRouter()
 const message = useMessage()
 const store = useProjectStore()
+const theme = useTheme()
 
 // 新建项目状态
 const showNewDialog = ref(false)
@@ -295,8 +313,8 @@ function formatDate(dateStr) {
 }
 .header {
   padding: 0 32px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 .header-inner {
   max-width: 1200px;
@@ -309,7 +327,7 @@ function formatDate(dateStr) {
 .logo {
   font-size: 22px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--text-primary);
   letter-spacing: 1px;
 }
 .content {
@@ -318,6 +336,7 @@ function formatDate(dateStr) {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  background: var(--bg-page);
 }
 .loading-state {
   display: flex;
@@ -336,7 +355,7 @@ function formatDate(dateStr) {
   cursor: pointer;
 }
 .synopsis {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
   min-height: 40px;
@@ -348,7 +367,7 @@ function formatDate(dateStr) {
 .meta {
   margin-top: 12px;
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
 }
 .meta-item {
   display: inline-flex;

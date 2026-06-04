@@ -20,3 +20,4 @@ __pycache__/
 *.pyc
 start.command
 static/
+.github/workflows/

@@ -171,12 +171,12 @@ function emitDelete(id) {
   align-items: center;
   justify-content: space-between;
   padding: 12px 12px 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
 }
 .panel-title {
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 .tree-list {
   flex: 1;
@@ -194,10 +194,10 @@ function emitDelete(id) {
   position: relative;
 }
 .tree-item:hover {
-  background: #f0f2f5;
+  background: var(--bg-hover);
 }
 .tree-item.active {
-  background: #e6f4ff;
+  background: var(--bg-active);
   color: #1677ff;
 }
 .tree-item.active .item-title {

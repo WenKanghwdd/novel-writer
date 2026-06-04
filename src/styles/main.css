@@ -1,6 +1,40 @@
 /* ============================================================
-   Novel Writer — 全局样式
+   Novel Writer — 全局样式（亮色 + 暗色）
    ============================================================ */
+
+/* ---- CSS 变量（亮色模式） ---- */
+:root {
+  --bg-page: #f5f7fa;
+  --bg-white: #ffffff;
+  --bg-panel: #fafafa;
+  --bg-hover: #f0f2f5;
+  --bg-active: #e6f4ff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-color: #e5e7eb;
+  --border-light: #eeeeee;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ---- CSS 变量（暗色模式） ---- */
+html.dark {
+  --bg-page: #1a1a2e;
+  --bg-white: #222244;
+  --bg-panel: #1e1e3a;
+  --bg-hover: #2a2a4a;
+  --bg-active: #1a3a6a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0b0;
+  --text-muted: #707080;
+  --border-color: #333366;
+  --border-light: #2a2a4a;
+  --header-bg: #1e1e3a;
+  --card-bg: #222244;
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
 
 /* 基础重置 */
 *,
@@ -19,8 +53,8 @@ html, body, #app {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
-  color: #333;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
 }
 
 /* 滚动条美化 */
@@ -37,6 +71,12 @@ html, body, #app {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #b0b5bd;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #444477;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #555599;
 }
 
 /* Naive UI 全局覆盖 */
@@ -68,4 +108,92 @@ html, body, #app {
 .project-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
+}
+html.dark .project-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 暗色模式：Naive UI 卡片背景覆盖 */
+html.dark .n-card {
+  background: var(--card-bg) !important;
+}
+html.dark .n-card__header {
+  color: var(--text-primary) !important;
+}
+
+/* Vditor 暗色适配 */
+html.dark .vditor,
+html.dark .vditor-reset,
+html.dark .vditor-ir {
+  background: #1a1a2e !important;
+}
+html.dark .vditor-toolbar {
+  background: #1e1e3a !important;
+  border-color: #333366 !important;
+}
+html.dark .vditor-toolbar__item {
+  color: #c0c0d0 !important;
+}
+html.dark .vditor-toolbar__item:hover {
+  background: #2a2a5a !important;
+}
+html.dark .vditor-toolbar__item--active {
+  background: #333366 !important;
+}
+html.dark .vditor-ir__node--expand {
+  background: #222244 !important;
+}
+html.dark .vditor-ir__marker {
+  color: #8888bb !important;
+}
+html.dark .vditor-ir__marker--heading {
+  color: #8888bb !important;
+}
+html.dark .vditor-ir__marker--bracket {
+  color: #8888bb !important;
+}
+html.dark .vditor-ir__marker--link {
+  color: #4f8fff !important;
+}
+html.dark .vditor-textarea {
+  color: #e0e0e0 !important;
+  background: #1a1a2e !important;
+}
+html.dark .vditor-counter {
+  color: #707080 !important;
+}
+html.dark .vditor-preview {
+  background: #1a1a2e !important;
+}
+html.dark .vditor-preview__action {
+  color: #c0c0d0 !important;
+}
+html.dark .vditor-upload {
+  background: #1e1e3a !important;
+}
+html.dark .vditor-panel {
+  background: #1e1e3a !important;
+  border-color: #333366 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+html.dark .vditor-panel--arrow::before,
+html.dark .vditor-panel--arrow::after {
+  border-color: transparent transparent #333366 !important;
+}
+html.dark .vditor-search {
+  background: #1e1e3a !important;
+  border-color: #333366 !important;
+}
+html.dark .vditor-search-input {
+  background: #222244 !important;
+  color: #e0e0e0 !important;
+  border-color: #333366 !important;
+}
+
+/* 暗色模式光标白色 */
+html.dark .vditor-ir,
+html.dark .vditor-textarea,
+html.dark .vditor,
+html.dark .vditor-reset {
+  caret-color: #ffffff !important;
 }

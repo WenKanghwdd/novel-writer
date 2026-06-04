@@ -111,7 +111,7 @@ function emitClose() {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 .header-left {
@@ -122,7 +122,7 @@ function emitClose() {
 .header-title {
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
 }
 
 /* 主体 */
@@ -143,14 +143,14 @@ function emitClose() {
 
 /* 使用指南 */
 .usage-guide {
-  background: #f9fafb;
+  background: var(--bg-hover);
   border-radius: 8px;
   padding: 16px;
 }
 .usage-guide h4 {
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 12px;
 }
 .usage-guide ol {
@@ -159,18 +159,18 @@ function emitClose() {
 .usage-guide li {
   margin-bottom: 12px;
   font-size: 13px;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 .usage-guide li strong {
-  color: #333;
+  color: var(--text-primary);
   display: block;
   font-size: 14px;
   margin-bottom: 2px;
 }
 .usage-guide li p {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 kbd {
   background: #eee;
@@ -181,7 +181,7 @@ kbd {
   font-family: inherit;
 }
 .prompt-example {
-  background: #f0f0f0;
+  background: var(--bg-hover);
   border-radius: 4px;
   padding: 6px 10px;
   margin: 4px 0;
@@ -195,6 +195,6 @@ kbd {
   margin-top: auto;
   text-align: center;
   padding-top: 12px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-light);
 }
 </style>

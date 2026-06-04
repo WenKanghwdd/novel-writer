@@ -158,7 +158,7 @@
  * - 实现自动保存（编辑后 10 秒）
  */
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import { useTheme } from '@/stores/theme'
@@ -239,6 +239,9 @@ onMounted(async () => {
 
   // 键盘快捷键
   window.addEventListener('keydown', handleKeyDown)
+
+  // 页面关闭前尝试保存
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
 // Ctrl+H / Cmd+H 打开查找替换
@@ -253,14 +256,29 @@ function handleKeyDown(e) {
   }
 }
 
+/** 页面关闭/刷新时提示未保存 */
+function handleBeforeUnload(e) {
+  if (isDirty) {
+    e.preventDefault()
+    e.returnValue = '内容尚未保存，确定离开吗？'
+  }
+}
+
+// 离开页面时保存内容（async 会被路由守卫自动 await）
+onBeforeRouteLeave(async () => {
+  if (isDirty) {
+    await triggerSave()
+  }
+})
+
 onBeforeUnmount(() => {
-  // 组件卸载前保存并销毁编辑器
   if (saveTimer) clearTimeout(saveTimer)
   if (vditorInstance) {
     vditorInstance.destroy()
     vditorInstance = null
   }
   window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 // ========== 监听章节切换：重新初始化编辑器 ==========
@@ -384,7 +402,7 @@ function scheduleAutoSave() {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     triggerSave()
-  }, 10_000) // 10 秒
+  }, 3_000) // 3 秒
 }
 
 /** 执行保存 */
@@ -423,10 +441,10 @@ async function triggerSave() {
 // ========== 事件处理 ==========
 
 /** 返回项目列表 */
-function goBack() {
+async function goBack() {
   // 如果有未保存内容，先保存
   if (isDirty) {
-    triggerSave()
+    await triggerSave()
   }
   store.closeProject()
   router.push('/')

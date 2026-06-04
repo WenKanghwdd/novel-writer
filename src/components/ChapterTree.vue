@@ -12,23 +12,28 @@
     </div>
 
     <!-- 章节列表 -->
-    <div class="tree-list" v-if="chapters.length > 0">
+    <div class="tree-list" v-if="items.length > 0">
       <div
-        v-for="chapter in flatList"
+        v-for="(chapter, idx) in items"
         :key="chapter.id"
         class="tree-item"
         :class="{
           active: chapter.id === activeId,
           'is-child': chapter.depth > 0,
+          'drag-over-top': dragOverTarget === chapter.id && dragOverPos === 'top',
+          'drag-over-bottom': dragOverTarget === chapter.id && dragOverPos === 'bottom',
         }"
         :style="{ paddingLeft: 12 + chapter.depth * 20 + 'px' }"
         draggable="true"
         @click="emitSelect(chapter.id)"
         @dragstart="handleDragStart($event, chapter)"
-        @dragover="handleDragOver($event, chapter)"
-        @drop="handleDrop($event, chapter)"
+        @dragover="handleDragOver($event, chapter, idx)"
+        @drop="handleDrop($event, chapter, idx)"
         @dragend="handleDragEnd"
       >
+        <!-- 序号 -->
+        <span class="item-index">{{ chapter.depth > 0 ? '└' : idx + 1 }}</span>
+
         <!-- 图标 -->
         <n-icon size="14" class="item-icon">
           <DocumentTextOutline />
@@ -37,18 +42,63 @@
         <!-- 标题 -->
         <span class="item-title">{{ chapter.title }}</span>
 
-        <!-- 删除按钮 -->
-        <n-button
-          size="tiny"
-          quaternary
-          circle
-          class="item-delete"
-          @click.stop="emitDelete(chapter.id)"
-        >
-          <template #icon>
-            <n-icon size="12"><CloseOutline /></n-icon>
-          </template>
-        </n-button>
+        <!-- 操作按钮组 -->
+        <span class="item-actions" @click.stop>
+          <!-- 上移 -->
+          <n-button
+            size="tiny"
+            quaternary
+            circle
+            :disabled="idx === 0"
+            @click="emitMoveUp(chapter.id)"
+            title="上移"
+          >
+            <template #icon><n-icon size="12"><ChevronUpOutline /></n-icon></template>
+          </n-button>
+          <!-- 下移 -->
+          <n-button
+            size="tiny"
+            quaternary
+            circle
+            :disabled="idx === items.length - 1"
+            @click="emitMoveDown(chapter.id)"
+            title="下移"
+          >
+            <template #icon><n-icon size="12"><ChevronDownOutline /></n-icon></template>
+          </n-button>
+          <!-- 降级（增加缩进） -->
+          <n-button
+            size="tiny"
+            quaternary
+            circle
+            :disabled="chapter.depth >= 3"
+            @click="emitIndent(chapter.id)"
+            title="降级"
+          >
+            <template #icon><n-icon size="12"><ArrowForwardOutline /></n-icon></template>
+          </n-button>
+          <!-- 升级（减少缩进） -->
+          <n-button
+            size="tiny"
+            quaternary
+            circle
+            :disabled="chapter.depth === 0"
+            @click="emitOutdent(chapter.id)"
+            title="升级"
+          >
+            <template #icon><n-icon size="12"><ArrowBackOutline /></n-icon></template>
+          </n-button>
+          <!-- 删除 -->
+          <n-button
+            size="tiny"
+            quaternary
+            circle
+            @click="emitDelete(chapter.id)"
+            title="删除"
+          >
+            <template #icon><n-icon size="12"><CloseOutline /></n-icon></template>
+          </n-button>
+        </span>
       </div>
     </div>
 
@@ -61,14 +111,12 @@
 /**
  * 章节目录树组件
  *
- * 展示项目的章节结构（扁平的树，通过缩进表示层级）。
- * 支持：
+ * 功能：
  * - 点击选择章节
- * - 拖拽排序（简单的交换 order_index）
+ * - 拖拽排序（拖到其他章节上方/下方）
+ * - 上下箭头按钮微调顺序
+ * - 左右箭头调整层级（降级/升级）
  * - 新增/删除章节
- *
- * 注意：目前实现的是单级章节，parent_id 预留但 UI 简化。
- * 未来可以扩展为真正的树形拖拽。
  */
 import { computed, ref } from 'vue'
 import { NButton, NEmpty, NIcon } from 'naive-ui'
@@ -76,38 +124,44 @@ import {
   AddOutline,
   CloseOutline,
   DocumentTextOutline,
+  ChevronUpOutline,
+  ChevronDownOutline,
+  ArrowForwardOutline,
+  ArrowBackOutline,
 } from '@vicons/ionicons5'
 
 const props = defineProps({
-  /** 章节列表（扁平数组，含 parent_id） */
   chapters: { type: Array, default: () => [] },
-  /** 当前选中章节 ID */
   activeId: { type: String, default: null },
 })
 
-const emit = defineEmits(['select', 'add', 'delete'])
+const emit = defineEmits([
+  'select',
+  'add',
+  'delete',
+  'move-up',
+  'move-down',
+  'indent',
+  'outdent',
+  'reorder',
+])
 
-// ========== 将扁平章节转换为带缩进深度的层级列表 ==========
-const flatList = computed(() => {
+// ========== 展平树（按顺序 + depth） ==========
+const items = computed(() => {
   const result = []
   const map = new Map()
 
-  // 先按 parent_id 分组
   for (const ch of props.chapters) {
-    if (!map.has(ch.parent_id)) {
-      map.set(ch.parent_id, [])
-    }
+    if (!map.has(ch.parent_id)) map.set(ch.parent_id, [])
     map.get(ch.parent_id).push(ch)
   }
 
-  // 递归展平（广度优先）
   function walk(parentIds, depth) {
     const children = []
     for (const pid of parentIds) {
       const kids = map.get(pid) || []
       children.push(...kids)
     }
-    // 按 order_index 排序
     children.sort((a, b) => a.order_index - b.order_index)
     for (const child of children) {
       result.push({ ...child, depth })
@@ -115,14 +169,14 @@ const flatList = computed(() => {
     }
   }
 
-  // 从根级开始（parent_id = null）
   walk([null], 0)
   return result
 })
 
-// ========== 拖拽排序状态 ==========
+// ========== 拖拽 ==========
 const dragData = ref(null)
-const dragOverId = ref(null)
+const dragOverTarget = ref(null)
+const dragOverPos = ref(null) // 'top' | 'bottom'
 
 function handleDragStart(event, chapter) {
   dragData.value = chapter
@@ -130,34 +184,58 @@ function handleDragStart(event, chapter) {
   event.dataTransfer.setData('text/plain', chapter.id)
 }
 
-function handleDragOver(event, chapter) {
+function handleDragOver(event, chapter, idx) {
   event.preventDefault()
   event.dataTransfer.dropEffect = 'move'
-  dragOverId.value = chapter.id
+  dragOverTarget.value = chapter.id
+
+  const rect = event.currentTarget.getBoundingClientRect()
+  const y = event.clientY - rect.top
+  dragOverPos.value = y < rect.height / 2 ? 'top' : 'bottom'
 }
 
-function handleDrop(event, chapter) {
+function handleDrop(event, targetChapter, targetIdx) {
   event.preventDefault()
-  dragOverId.value = null
-  // 拖拽排序功能暂不实现真正的排序持久化
-  // 目前只完成 UI 层面的拖拽交互，真正的排序更新未来通过
-  // 批量更新 order_index 来实现
+  const source = dragData.value
+  if (!source || source.id === targetChapter.id) {
+    handleDragEnd()
+    return
+  }
+
+  // 计算目标 position（插入在目标之前或之后）
+  const insertBefore = dragOverPos.value === 'top'
+  // 重新计算所有 order_index
+  const newOrder = items.value
+    .filter((c) => c.id !== source.id) // 去掉拖动的章节
+  const insertAt = newOrder.findIndex((c) => c.id === targetChapter.id)
+  if (insertAt === -1) { handleDragEnd(); return }
+  const finalIdx = insertBefore ? insertAt : insertAt + 1
+  newOrder.splice(finalIdx, 0, source)
+
+  // 生成带 order_index 的更新列表
+  const updates = newOrder.map((c, i) => ({
+    id: c.id,
+    order_index: i,
+  }))
+
+  emit('reorder', updates)
+  handleDragEnd()
 }
 
 function handleDragEnd() {
   dragData.value = null
-  dragOverId.value = null
+  dragOverTarget.value = null
+  dragOverPos.value = null
 }
 
-function emitSelect(id) {
-  emit('select', id)
-}
-function emitAdd() {
-  emit('add')
-}
-function emitDelete(id) {
-  emit('delete', id)
-}
+// ========== 事件转发 ==========
+function emitSelect(id) { emit('select', id) }
+function emitAdd() { emit('add') }
+function emitDelete(id) { emit('delete', id) }
+function emitMoveUp(id) { emit('move-up', id) }
+function emitMoveDown(id) { emit('move-down', id) }
+function emitIndent(id) { emit('indent', id) }
+function emitOutdent(id) { emit('outdent', id) }
 </script>
 
 <style scoped>
@@ -186,12 +264,14 @@ function emitDelete(id) {
 .tree-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 6px 8px;
   cursor: pointer;
   transition: background 0.15s;
   user-select: none;
   position: relative;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
 }
 .tree-item:hover {
   background: var(--bg-hover);
@@ -203,8 +283,18 @@ function emitDelete(id) {
 .tree-item.active .item-title {
   font-weight: 600;
 }
-.tree-item.is-child {
-  /* 缩进通过 style paddingLeft 控制 */
+.tree-item.drag-over-top {
+  border-top-color: #1677ff;
+}
+.tree-item.drag-over-bottom {
+  border-bottom-color: #1677ff;
+}
+.item-index {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 16px;
+  text-align: right;
+  flex-shrink: 0;
 }
 .item-icon {
   flex-shrink: 0;
@@ -216,12 +306,17 @@ function emitDelete(id) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
-.item-delete {
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
   opacity: 0;
   flex-shrink: 0;
+  transition: opacity 0.1s;
 }
-.tree-item:hover .item-delete {
+.tree-item:hover .item-actions {
   opacity: 1;
 }
 .tree-empty {

@@ -88,6 +88,11 @@
             @select="store.setActiveChapter"
             @add="handleAddChapter"
             @delete="handleDeleteChapter"
+            @move-up="(id) => store.moveChapterUp(id)"
+            @move-down="(id) => store.moveChapterDown(id)"
+            @indent="(id) => store.indentChapter(id)"
+            @outdent="(id) => store.outdentChapter(id)"
+            @reorder="(updates) => store.batchReorderChapters(updates)"
           />
         </aside>
       </transition>

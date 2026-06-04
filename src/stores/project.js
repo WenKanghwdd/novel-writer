@@ -148,6 +148,80 @@ export const useProjectStore = defineStore('project', () => {
     activeChapterId.value = id
   }
 
+  /** 批量重排章节（拖拽或按钮排序后调用） */
+  async function batchReorderChapters(updates) {
+    // updates: [{ id, order_index, parent_id? }]
+    await chaptersApi.batchUpdateOrder(updates)
+    // 重新加载章节列表
+    if (currentProject.value) {
+      chapters.value = await chaptersApi.list(currentProject.value.id)
+    }
+  }
+
+  /** 上移章节（交换 index） */
+  async function moveChapterUp(id) {
+    const sorted = [...chapters.value].sort((a, b) => a.order_index - b.order_index)
+    const idx = sorted.findIndex((c) => c.id === id)
+    if (idx <= 0) return
+    // 同一 parent 内交换
+    const current = sorted[idx]
+    const above = sorted[idx - 1]
+    if (current.parent_id !== above.parent_id) return // 不同层级不交换
+
+    await batchReorderChapters([
+      { id: current.id, order_index: above.order_index, parent_id: current.parent_id },
+      { id: above.id, order_index: current.order_index, parent_id: above.parent_id },
+    ])
+  }
+
+  /** 下移章节 */
+  async function moveChapterDown(id) {
+    const sorted = [...chapters.value].sort((a, b) => a.order_index - b.order_index)
+    const idx = sorted.findIndex((c) => c.id === id)
+    if (idx < 0 || idx >= sorted.length - 1) return
+    const current = sorted[idx]
+    const below = sorted[idx + 1]
+    if (current.parent_id !== below.parent_id) return
+
+    await batchReorderChapters([
+      { id: current.id, order_index: below.order_index, parent_id: current.parent_id },
+      { id: below.id, order_index: current.order_index, parent_id: below.parent_id },
+    ])
+  }
+
+  /** 降级（增加缩进：parent 设为前一个同级章节） */
+  async function indentChapter(id) {
+    const sorted = [...chapters.value].sort((a, b) => a.order_index - b.order_index)
+    const idx = sorted.findIndex((c) => c.id === id)
+    if (idx <= 0) return
+    const current = sorted[idx]
+    const prev = sorted[idx - 1]
+
+    // 将当前章节的 parent 设为前一个章节
+    current.parent_id = prev.id
+    await chaptersApi.update(id, { parent_id: prev.id })
+    // 重排序：将该章节移到子目录最末
+    const siblings = chapters.value
+      .filter((c) => c.parent_id === prev.id)
+      .sort((a, b) => a.order_index - b.order_index)
+    const updates = siblings.map((c, i) => ({ id: c.id, order_index: i }))
+    await batchReorderChapters(updates)
+  }
+
+  /** 升级（减少缩进：parent 设为父章节的 parent） */
+  async function outdentChapter(id) {
+    const current = chapters.value.find((c) => c.id === id)
+    if (!current || !current.parent_id) return
+
+    const parent = chapters.value.find((c) => c.id === current.parent_id)
+    current.parent_id = parent ? parent.parent_id : null
+    await chaptersApi.update(id, { parent_id: current.parent_id })
+    // 重排序
+    if (currentProject.value) {
+      chapters.value = await chaptersApi.list(currentProject.value.id)
+    }
+  }
+
   return {
     // 状态
     projects,

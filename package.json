@@ -12,6 +12,8 @@
     "@supabase/supabase-js": "^2.46.0",
     "@vicons/ionicons5": "^0.13.0",
     "@vueuse/core": "^11.0.0",
+    "docx": "^9.7.1",
+    "file-saver": "^2.0.5",
     "naive-ui": "^2.40.0",
     "pinia": "^2.2.0",
     "vditor": "^3.10.0",

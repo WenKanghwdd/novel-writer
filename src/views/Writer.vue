@@ -63,6 +63,14 @@
           </template>
           查找
         </n-button>
+
+        <!-- 导出 -->
+        <ExportButton
+          :current-content="vditorInstance?.getValue() || ''"
+          :current-title="editingTitle"
+          :all-chapters="store.chapters"
+          :project-title="store.currentProject?.title || ''"
+        />
       </div>
       <div class="header-right">
         <!-- 保存状态指示 -->
@@ -168,6 +176,7 @@ import ChapterTree from '@/components/ChapterTree.vue'
 import 'vditor/dist/index.css'
 import DeepSeekSidebar from '@/components/DeepSeekSidebar.vue'
 import FindReplace from '@/components/FindReplace.vue'
+import ExportButton from '@/components/ExportButton.vue'
 import {
   NButton,
   NEmpty,

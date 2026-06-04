@@ -131,6 +131,10 @@ html.dark .vditor-toolbar {
   background: #1e1e3a !important;
   border-color: #333366 !important;
 }
+.vditor-toolbar {
+  position: relative;
+  z-index: 1 !important;
+}
 html.dark .vditor-toolbar__item {
   color: #c0c0d0 !important;
 }

@@ -38,18 +38,18 @@ export const useProjectStore = defineStore('project', () => {
   // ==================== 方法 ====================
 
   /** 加载所有项目 */
-  async function loadProjects() {
+  async function loadProjects(userId) {
     loading.value = true
     try {
-      projects.value = await projectsApi.list()
+      projects.value = await projectsApi.list(userId)
     } finally {
       loading.value = false
     }
   }
 
   /** 创建新项目，创建后自动生成一个初始章节 */
-  async function createProject({ title, synopsis }) {
-    const project = await projectsApi.create({ title, synopsis })
+  async function createProject({ userId, title, synopsis }) {
+    const project = await projectsApi.create({ userId, title, synopsis })
     // 创建一个默认章节
     await chaptersApi.create({
       project_id: project.id,

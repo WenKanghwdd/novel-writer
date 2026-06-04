@@ -587,12 +587,15 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  height: 52px;
+  height: 56px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   position: relative;
-  z-index: 100;
+  z-index: 9999;
+}
+.writer-header > * {
+  pointer-events: auto;
 }
 .header-left {
   display: flex;

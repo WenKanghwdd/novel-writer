@@ -18,6 +18,18 @@
           </template>
           {{ theme.isDark.value ? '亮色' : '暗色' }}
         </n-button>
+        <n-tag v-if="userEmail" size="small" class="user-tag">
+          <template #icon>
+            <n-icon size="14"><PersonOutline /></n-icon>
+          </template>
+          {{ userEmail }}
+        </n-tag>
+        <n-button quaternary size="small" @click="handleLogout">
+          <template #icon>
+            <n-icon size="16"><LogOutOutline /></n-icon>
+          </template>
+          退出
+        </n-button>
         <n-button type="primary" size="medium" @click="showNewDialog = true">
           <template #icon>
             <n-icon><AddOutline /></n-icon>
@@ -184,6 +196,7 @@ import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import { useTheme } from '@/stores/theme'
+import { supabase, authApi } from '@/lib/supabase'
 import {
   NButton,
   NCard,
@@ -197,6 +210,7 @@ import {
   NIcon,
   NSpace,
   NSpin,
+  NTag,
 } from 'naive-ui'
 import {
   AddOutline,
@@ -205,12 +219,18 @@ import {
   TrashOutline,
   MoonOutline,
   SunnyOutline,
+  PersonOutline,
+  LogOutOutline,
 } from '@vicons/ionicons5'
 
 const router = useRouter()
 const message = useMessage()
 const store = useProjectStore()
 const theme = useTheme()
+
+// 当前登录用户
+const userEmail = ref('')
+const userId = ref(null)
 
 // 新建项目状态
 const showNewDialog = ref(false)
@@ -228,8 +248,13 @@ const formRules = {
 }
 
 /** 加载项目列表 */
-onMounted(() => {
-  store.loadProjects()
+onMounted(async () => {
+  const { data } = await supabase.auth.getUser()
+  if (data.user) {
+    userId.value = data.user.id
+    userEmail.value = data.user.email || ''
+    store.loadProjects(data.user.id)
+  }
 })
 
 /** 进入写作页面 */
@@ -246,6 +271,7 @@ async function handleCreate() {
   creating.value = true
   try {
     const project = await store.createProject({
+      userId: userId.value,
       title: newProject.value.title.trim(),
       synopsis: newProject.value.synopsis.trim(),
     })
@@ -296,6 +322,12 @@ function handleDelete(project) {
   }
 }
 
+/** 退出登录 */
+async function handleLogout() {
+  await authApi.signOut()
+  router.push('/login')
+}
+
 /** 格式化日期 */
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -323,6 +355,10 @@ function formatDate(dateStr) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+}
+.user-tag {
+  flex-shrink: 0;
 }
 .logo {
   font-size: 22px;

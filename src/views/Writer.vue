@@ -428,31 +428,41 @@ function scheduleAutoSave() {
   }, 3_000) // 3 秒
 }
 
-/** 执行保存 */
+/** 执行保存（返回是否成功） */
 async function triggerSave() {
-  if (!store.activeChapter || !vditorInstance) return
+  if (!store.activeChapter || !vditorInstance) {
+    console.warn('[Save] 跳过保存：无活动章节或编辑器实例')
+    return false
+  }
 
   const chapterId = store.activeChapterId.value
-  if (!chapterId) return
+  if (!chapterId) {
+    console.warn('[Save] 跳过保存：无章节 ID')
+    return false
+  }
 
   saveStatus.value = { type: 'saving', text: '保存中...', color: '#1890ff' }
-  isDirty = false
 
   try {
     // 从 Vditor 获取最新内容
     const content = vditorInstance.getValue()
     const title = editingTitle.value.trim() || '未命名章节'
 
+    console.log('[Save] 保存章节:', chapterId, '标题:', title, '字数:', content.length)
+
     await store.saveChapter(chapterId, {
       title,
       content,
     })
+
+    isDirty = false
     saveStatus.value = { type: 'saved', text: '已保存', color: '#52c41a' }
+    return true
   } catch (err) {
-    console.error('自动保存失败:', err)
+    console.error('[Save] 保存失败:', err.message || err)
     saveStatus.value = { type: 'error', text: '保存失败', color: '#ff4d4f' }
-    // 标记为脏，下次编辑重试
     isDirty = true
+    return false
   } finally {
     if (saveTimer) {
       clearTimeout(saveTimer)
@@ -500,12 +510,16 @@ async function handleAddChapter() {
 
 /** 手动保存 */
 async function handleManualSave() {
-  if (!store.activeChapter || !vditorInstance) {
-    message.warning('没有可保存的内容')
-    return
+  try {
+    const ok = await triggerSave()
+    if (ok) {
+      message.success('已保存')
+    } else {
+      message.error('保存失败，请检查控制台错误')
+    }
+  } catch (err) {
+    message.error('保存异常：' + (err.message || '未知错误'))
   }
-  await triggerSave()
-  message.success('已保存')
 }
 
 /** 删除章节 */

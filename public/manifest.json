@@ -1,0 +1,18 @@
+{
+  "name": "哈哈哈 - 小说写作",
+  "short_name": "哈哈哈",
+  "description": "个人小说写作管理工具",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

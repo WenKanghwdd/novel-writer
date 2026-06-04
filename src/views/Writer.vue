@@ -183,7 +183,7 @@ import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
 import { useTheme } from '@/stores/theme'
-import { projectsApi } from '@/lib/supabase'
+import { projectsApi, supabase } from '@/lib/supabase'
 import ChapterTree from '@/components/ChapterTree.vue'
 // Vditor 核心 CSS（必须引入，否则工具栏样式不生效）
 import 'vditor/dist/index.css'
@@ -240,9 +240,18 @@ const saveStatus = ref({
 // ========== 初始化 ==========
 onMounted(async () => {
   try {
+    // 获取当前用户
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData.user) {
+      message.error('请先登录')
+      router.push('/login')
+      return
+    }
+    const userId = userData.user.id
+
     // 获取项目信息
     const [project] = await Promise.all([
-      projectsApi.list().then((list) => list.find((p) => p.id === props.id)),
+      projectsApi.list(userId).then((list) => list.find((p) => p.id === props.id)),
     ])
     if (!project) {
       message.error('项目不存在')

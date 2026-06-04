@@ -73,6 +73,19 @@
         />
       </div>
       <div class="header-right">
+        <!-- 手动保存按钮 -->
+        <n-button
+          quaternary
+          size="small"
+          type="primary"
+          @click="handleManualSave"
+        >
+          <template #icon>
+            <n-icon size="16"><SaveOutline /></n-icon>
+          </template>
+          保存
+        </n-button>
+
         <!-- 保存状态指示 -->
         <span class="save-status" :style="{ color: saveStatus.color }">
           <n-icon size="14">
@@ -194,6 +207,7 @@ import {
   SearchOutline,
   MoonOutline,
   SunnyOutline,
+  SaveOutline,
 } from '@vicons/ionicons5'
 
 const props = defineProps({
@@ -482,6 +496,16 @@ async function handleAddChapter() {
   } catch (err) {
     message.error('新增章节失败')
   }
+}
+
+/** 手动保存 */
+async function handleManualSave() {
+  if (!store.activeChapter || !vditorInstance) {
+    message.warning('没有可保存的内容')
+    return
+  }
+  await triggerSave()
+  message.success('已保存')
 }
 
 /** 删除章节 */

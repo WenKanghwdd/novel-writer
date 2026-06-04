@@ -435,7 +435,7 @@ async function triggerSave() {
     return false
   }
 
-  const chapterId = store.activeChapterId.value
+  const chapterId = store.activeChapterId
   if (!chapterId) {
     console.warn('[Save] 跳过保存：无章节 ID')
     return false
@@ -489,7 +489,7 @@ function handleTitleBlur() {
   const newTitle = editingTitle.value.trim() || '未命名章节'
   if (newTitle !== store.activeChapter.title) {
     // 标题改变直接保存
-    store.saveChapter(store.activeChapterId.value, { title: newTitle }).catch((err) => {
+    store.saveChapter(store.activeChapterId, { title: newTitle }).catch((err) => {
       message.error('保存标题失败')
     })
   }
@@ -508,17 +508,35 @@ async function handleAddChapter() {
   }
 }
 
-/** 手动保存 */
+/** 手动保存（直接获取当前编辑器内容并写入 Supabase） */
 async function handleManualSave() {
+  // 从编辑器获取当前内容（不依赖 store.activeChapterId）
+  if (!vditorInstance) {
+    message.warning('编辑器尚未初始化')
+    return
+  }
+
+  const chapterId = store.activeChapterId
+  if (!chapterId) {
+    message.warning('没有选中的章节，请在左侧目录中选择或新增一个章节')
+    return
+  }
+
+  const content = vditorInstance.getValue()
+  const title = editingTitle.value.trim() || '未命名章节'
+
+  saveStatus.value = { type: 'saving', text: '保存中...', color: '#1890ff' }
+
   try {
-    const ok = await triggerSave()
-    if (ok) {
-      message.success('已保存')
-    } else {
-      message.error('保存失败，请检查控制台错误')
-    }
+    await store.saveChapter(chapterId, { title, content })
+    isDirty = false
+    saveStatus.value = { type: 'saved', text: '已保存', color: '#52c41a' }
+    message.success('已保存')
   } catch (err) {
-    message.error('保存异常：' + (err.message || '未知错误'))
+    console.error('[Save] 保存失败:', err)
+    saveStatus.value = { type: 'error', text: '保存失败', color: '#ff4d4f' }
+    isDirty = true
+    message.error('保存失败：' + (err.message || '请检查 Supabase 配置'))
   }
 }
 

@@ -366,6 +366,7 @@ async function initOrSwitchEditor() {
     tab: '\t',
     // 使用 CDN 加载 Vditor 的资源文件（i18n、样式等）
     cdn: 'https://cdn.jsdelivr.net/npm/vditor@3.11.2',
+    theme: theme.isDark.value ? 'dark' : 'classic',
   })
 
   // 初始化后立即应用暗色主题（如果已开启）

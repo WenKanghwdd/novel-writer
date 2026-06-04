@@ -190,10 +190,34 @@ html.dark .vditor-search-input {
   border-color: #333366 !important;
 }
 
-/* 暗色模式光标白色 */
-html.dark .vditor-ir,
+/* 暗色模式：编辑器文字白色 + 光标白色 */
+html.dark .vditor-ir *,
 html.dark .vditor-textarea,
 html.dark .vditor,
-html.dark .vditor-reset {
+html.dark .vditor-reset,
+html.dark .vditor-reset p,
+html.dark .vditor-reset span,
+html.dark .vditor-reset div,
+html.dark .vditor-ir p,
+html.dark .vditor-ir span,
+html.dark .vditor-ir div {
+  color: #e8e8f0 !important;
   caret-color: #ffffff !important;
+}
+/* 标题保持亮色 */
+html.dark .vditor-ir h1,
+html.dark .vditor-ir h2,
+html.dark .vditor-ir h3,
+html.dark .vditor-ir h4,
+html.dark .vditor-reset h1,
+html.dark .vditor-reset h2,
+html.dark .vditor-reset h3,
+html.dark .vditor-reset h4 {
+  color: #ffffff !important;
+}
+/* 代码块特殊处理 */
+html.dark .vditor-ir code,
+html.dark .vditor-reset code {
+  color: #e0e0e0 !important;
+  background: #2a2a4a !important;
 }

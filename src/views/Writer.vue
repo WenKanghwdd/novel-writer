@@ -559,6 +559,8 @@ watch(
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 .header-left {
   display: flex;
@@ -613,7 +615,7 @@ watch(
   /* 当右侧 AI 面板打开时，编辑器宽度会被 flex 自动压缩 */
 }
 .chapter-title-bar {
-  padding: 12px 24px 0;
+  padding: 16px 24px 0;
   flex-shrink: 0;
 }
 .title-input {

@@ -8,13 +8,13 @@
   --bg-white: #ffffff;
   --bg-panel: #fafafa;
   --bg-hover: #f0f2f5;
-  --bg-active: #e6f4ff;
+  --bg-active: #CFE8CB;
   --text-primary: #333333;
   --text-secondary: #666666;
   --text-muted: #999999;
   --border-color: #e5e7eb;
   --border-light: #eeeeee;
-  --header-bg: #ffffff;
+  --header-bg: #8FC9A6;
   --card-bg: #ffffff;
   --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
 }

@@ -278,16 +278,16 @@ function emitOutdent(id) { emit('outdent', id) }
 }
 .tree-item.active {
   background: var(--bg-active);
-  color: #1677ff;
+  color: #3a8a5c;
 }
 .tree-item.active .item-title {
   font-weight: 600;
 }
 .tree-item.drag-over-top {
-  border-top-color: #1677ff;
+  border-top-color: #8FC9A6;
 }
 .tree-item.drag-over-bottom {
-  border-bottom-color: #1677ff;
+  border-bottom-color: #8FC9A6;
 }
 .item-index {
   font-size: 11px;

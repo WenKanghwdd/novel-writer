@@ -95,6 +95,17 @@
           </n-icon>
           {{ saveStatus.text }}
         </span>
+
+        <!-- 字数统计 -->
+        <span class="word-count">
+          <template v-if="store.activeChapter">
+            {{ formatWordCount(currentWordCount) }}
+          </template>
+          <n-divider vertical style="margin: 0 6px" />
+          <span class="word-count-total">
+            全文 {{ formatWordCount(totalWordCount) }}
+          </span>
+        </span>
       </div>
     </n-layout-header>
 
@@ -140,6 +151,10 @@
               @blur="handleTitleBlur"
               @keyup.enter="$event.target.blur()"
             />
+            <!-- 当前章节字数 -->
+            <span class="chapter-word-count">
+              本章 {{ formatWordCount(currentWordCount) }}
+            </span>
           </div>
 
           <!-- 查找替换栏 -->
@@ -178,7 +193,7 @@
  * - 管理 Vditor 编辑器实例
  * - 实现自动保存（编辑后 10 秒）
  */
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import { useProjectStore } from '@/stores/project'
@@ -190,8 +205,10 @@ import 'vditor/dist/index.css'
 import DeepSeekSidebar from '@/components/DeepSeekSidebar.vue'
 import FindReplace from '@/components/FindReplace.vue'
 import ExportButton from '@/components/ExportButton.vue'
+import { countWords, formatWordCount } from '@/utils/wordCount'
 import {
   NButton,
+  NDivider,
   NEmpty,
   NIcon,
   NInput,
@@ -235,6 +252,12 @@ const saveStatus = ref({
   type: 'saved',  // 'saved' | 'saving' | 'dirty'
   text: '已保存',
   color: '#52c41a',
+})
+
+// ========== 字数统计 ==========
+const currentWordCount = ref(0)
+const totalWordCount = computed(() => {
+  return store.chapters.reduce((sum, ch) => sum + countWords(ch.content), 0)
 })
 
 // ========== 初始化 ==========
@@ -403,6 +426,10 @@ async function initOrSwitchEditor() {
         isDirty = true
         saveStatus.value = { type: 'dirty', text: '未保存', color: '#faad14' }
       }
+      // 实时更新当前章节字数
+      if (vditorInstance) {
+        currentWordCount.value = countWords(vditorInstance.getValue())
+      }
       scheduleAutoSave()
     },
     // 获取焦点：如果之前未触发 input，也启动定时器
@@ -418,6 +445,9 @@ async function initOrSwitchEditor() {
     cdn: 'https://cdn.jsdelivr.net/npm/vditor@3.11.2',
     theme: theme.isDark.value ? 'dark' : 'classic',
   })
+
+  // 初始化字数
+  currentWordCount.value = countWords(store.activeChapter.content)
 
   // 初始化后立即应用暗色主题（如果已开启）
   if (theme.isDark.value) {
@@ -621,6 +651,16 @@ watch(
   align-items: center;
   gap: 12px;
 }
+.word-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.word-count-total {
+  color: var(--text-muted);
+}
 .save-status {
   display: flex;
   align-items: center;
@@ -669,6 +709,22 @@ watch(
 .title-input :deep(.n-input__input) {
   font-size: 20px !important;
   font-weight: 600 !important;
+}
+.chapter-word-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+.chapter-title-bar {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px 0;
+  flex-shrink: 0;
+  gap: 4px;
+}
+.chapter-title-bar .title-input {
+  flex: 1;
 }
 .editor-container {
   flex: 1;

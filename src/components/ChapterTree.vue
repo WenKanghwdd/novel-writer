@@ -42,6 +42,11 @@
         <!-- 标题 -->
         <span class="item-title">{{ chapter.title }}</span>
 
+        <!-- 字数 -->
+        <span class="item-word-count" v-if="wordCountMap[chapter.id]">
+          {{ formatWordCount(wordCountMap[chapter.id]) }}
+        </span>
+
         <!-- 操作按钮组 -->
         <span class="item-actions" @click.stop>
           <!-- 上移 -->
@@ -119,6 +124,7 @@
  * - 新增/删除章节
  */
 import { computed, ref } from 'vue'
+import { countWords, formatWordCount } from '@/utils/wordCount'
 import { NButton, NEmpty, NIcon } from 'naive-ui'
 import {
   AddOutline,
@@ -171,6 +177,15 @@ const items = computed(() => {
 
   walk([null], 0)
   return result
+})
+
+// ========== 字数统计 ==========
+const wordCountMap = computed(() => {
+  const map = {}
+  for (const ch of props.chapters) {
+    map[ch.id] = countWords(ch.content)
+  }
+  return map
 })
 
 // ========== 拖拽 ==========
@@ -307,6 +322,13 @@ function emitOutdent(id) { emit('outdent', id) }
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+.item-word-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 2px;
 }
 .item-actions {
   display: flex;

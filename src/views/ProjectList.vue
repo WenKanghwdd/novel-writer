@@ -92,7 +92,7 @@
                   <template #icon>
                     <n-icon><CreateOutline /></n-icon>
                   </template>
-                  重命名
+                  编辑
                 </n-button>
                 <n-button
                   size="tiny"
@@ -157,15 +157,15 @@
       </template>
     </n-modal>
 
-    <!-- 重命名弹窗 -->
+    <!-- 编辑项目弹窗（标题 + 简介） -->
     <n-modal
       v-model:show="showRenameDialog"
-      title="重命名项目"
+      title="编辑项目"
       preset="card"
-      style="width: 420px"
+      style="width: 480px"
     >
       <n-form label-placement="top">
-        <n-form-item label="新标题">
+        <n-form-item label="项目标题">
           <n-input
             v-model:value="renameTitle"
             placeholder="输入新标题"
@@ -174,11 +174,21 @@
             autofocus
           />
         </n-form-item>
+        <n-form-item label="故事简介">
+          <n-input
+            v-model:value="renameSynopsis"
+            type="textarea"
+            placeholder="简要描述这个故事..."
+            :rows="3"
+            maxlength="500"
+            show-count
+          />
+        </n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
           <n-button @click="showRenameDialog = false">取消</n-button>
-          <n-button type="primary" @click="handleRenameConfirm">确认</n-button>
+          <n-button type="primary" @click="handleRenameConfirm">保存</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -237,10 +247,11 @@ const showNewDialog = ref(false)
 const creating = ref(false)
 const newProject = ref({ title: '', synopsis: '' })
 
-// 重命名状态
+// 编辑项目状态（标题 + 简介）
 const showRenameDialog = ref(false)
 const renameTarget = ref(null)
 const renameTitle = ref('')
+const renameSynopsis = ref('')
 
 // 表单验证规则
 const formRules = {
@@ -288,14 +299,15 @@ async function handleCreate() {
   }
 }
 
-/** 打开重命名弹窗 */
+/** 打开编辑弹窗（标题 + 简介） */
 function handleRename(project) {
   renameTarget.value = project
   renameTitle.value = project.title
+  renameSynopsis.value = project.synopsis || ''
   showRenameDialog.value = true
 }
 
-/** 确认重命名 */
+/** 保存编辑（标题 + 简介） */
 async function handleRenameConfirm() {
   if (!renameTitle.value.trim()) {
     message.warning('请输入标题')
@@ -304,11 +316,12 @@ async function handleRenameConfirm() {
   try {
     await store.updateProject(renameTarget.value.id, {
       title: renameTitle.value.trim(),
+      synopsis: renameSynopsis.value.trim(),
     })
-    message.success('重命名成功')
+    message.success('已保存')
     showRenameDialog.value = false
   } catch (err) {
-    message.error('重命名失败：' + (err.message || '未知错误'))
+    message.error('保存失败：' + (err.message || '未知错误'))
   }
 }
 
